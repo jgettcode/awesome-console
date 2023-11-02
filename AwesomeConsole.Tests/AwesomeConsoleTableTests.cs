@@ -5,6 +5,52 @@ namespace AwesomeConsole.Tables.Tests;
 public class AwesomeConsoleTableTests
 {
     [Fact]
+    public void CanWriteNullHeader()
+    {
+        Table table;
+        string actual;
+        string expected =
+        """
+        -------------------------------------------------
+        | one   |       | 3                             |
+        -------------------------------------------------
+        | 1     | 2     | three                         |
+        -------------------------------------------------
+        | hello | world | very long text very long text |
+        -------------------------------------------------
+        """;
+
+        // mix of types and null
+        table = new Table("one", null, 3)
+            .AddRow(1, 2, "three")
+            .AddRow("hello", "world", "very long text very long text");
+
+        actual = table.ToString();
+        Assert.Equal(expected, actual);
+
+        // same type (string) and null
+        table = new Table("one", null, "3")
+            .AddRow(1, 2, "three")
+            .AddRow("hello", "world", "very long text very long text");
+
+        actual = table.ToString();
+        Assert.Equal(expected, actual);
+
+        // mix of types (including TableColumn) and null
+        table = new Table("one", null, new TableColumn("3"))
+            .AddRow(1, 2, "three")
+            .AddRow("hello", "world", "very long text very long text");
+
+        // same type (TableColumn) and null
+        table = new Table(new TableColumn("one"), null, new TableColumn("3"))
+            .AddRow(1, 2, "three")
+            .AddRow("hello", "world", "very long text very long text");
+            
+        actual = table.ToString();
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
     public void CanWriteDefault()
     {
         var table = new Table("one", "two", "three");

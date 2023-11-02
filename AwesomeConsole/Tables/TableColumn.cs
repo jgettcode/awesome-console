@@ -4,12 +4,14 @@ namespace AwesomeConsole.Tables;
 
 public class TableColumn : ITableColumn
 {
-    public static TableColumn FromObject(object c)
+    public static TableColumn FromObject(object? c)
     {
+        if (c == null)
+            return new TableColumn(string.Empty);
         if (c is TableColumn result)
             return result;
         else
-            return new TableColumn(c.ToString() ?? throw new NullReferenceException("Invalid null column value."));
+            return new TableColumn(c.ToString() ?? string.Empty);
     }
 
     private Func<ITableRowValue, string>? _formatter;
@@ -19,21 +21,21 @@ public class TableColumn : ITableColumn
     public Alignment? ValueAlignment { get; private set; }
     public bool HasFormatter => _formatter != null;
     
-    public TableColumn(string headerText)
+    public TableColumn(string? headerText)
         : this(headerText, null, null, null) { }
 
-    public TableColumn(string headerText, Alignment alignment)
+    public TableColumn(string? headerText, Alignment alignment)
         : this(headerText, headerAlignment: alignment, valueAlignment: alignment, null) { }
 
-    public TableColumn(string headerText, Alignment headerAlignment, Alignment valueAlignment)
+    public TableColumn(string? headerText, Alignment headerAlignment, Alignment valueAlignment)
         : this(headerText, headerAlignment: headerAlignment, valueAlignment: valueAlignment, null) { }
 
-    public TableColumn(string headerText, Func<ITableRowValue, string> formatter)
+    public TableColumn(string? headerText, Func<ITableRowValue, string> formatter)
         : this(headerText, null, null, formatter) { }
 
-    public TableColumn(string headerText, Alignment? headerAlignment = null, Alignment? valueAlignment = null, Func<ITableRowValue, string>? formatter = null)
+    public TableColumn(string? headerText, Alignment? headerAlignment = null, Alignment? valueAlignment = null, Func<ITableRowValue, string>? formatter = null)
     {
-        HeaderText = headerText;
+        HeaderText = headerText ?? string.Empty;
         HeaderAlignment = headerAlignment;
         ValueAlignment = valueAlignment;
         _formatter = formatter;

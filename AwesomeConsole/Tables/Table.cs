@@ -1,4 +1,4 @@
-﻿using AwesomeConsole.Tables.Interfaces;
+﻿using System.Collections;
 
 namespace AwesomeConsole.Tables;
 
@@ -12,24 +12,24 @@ public class Table : TableBase
         return table;
     }
 
-    public Table(params string[] columns)
-        : this(columns.Select(c => new TableColumn(c)).ToArray()) { }
+    public Table(IEnumerable columns)
+        : this(columns.Cast<object>().Select(TableColumn.FromObject)) { }
 
-    public Table(params object[] columns)
-        : this(columns.Select(TableColumn.FromObject).ToArray()) { }
+    public Table(params object?[] columns)
+        : this(columns.Select(TableColumn.FromObject)) { }
 
-    public Table(params TableColumn[] columns)
-        : this(new TableOptions { Columns = columns }) { }
+    public Table(IEnumerable<TableColumn> columns)
+        : this(new TableOptions { Columns = columns.ToArray() }) { }
 
     protected Table(TableOptions options) : base(options) { }
 
-    public Table AddColumn(params string[] columns)
-        => AddColumn(columns.Select(c => new TableColumn(c)).ToArray());
+    public Table AddColumn(params object?[] columns)
+        => AddColumns(columns.Select(TableColumn.FromObject).ToArray());
 
-    public Table AddColumn(params object[] columns)
-        => AddColumn(columns.Select(TableColumn.FromObject).ToArray());
+    public Table AddColumns(IEnumerable columns)
+        => AddColumns(columns.Cast<object>().Select(TableColumn.FromObject).ToArray());
 
-    public Table AddColumn(params TableColumn[] columns)
+    public Table AddColumns(IEnumerable<TableColumn> columns)
     {
         _columns.AddRange(columns);
         return this;

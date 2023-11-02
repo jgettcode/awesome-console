@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace AwesomeConsole.Tables;
 
@@ -42,18 +43,24 @@ public class Table : TableBase
         => AddRow(new[] { new TableRow(values) });
 
     public Table AddRow(params TableRow[] rows)
+        => AddRow(rows.AsEnumerable());
+
+    public Table AddRow(IEnumerable<TableRow> rows)
     {
         if (_columns.Count == 0)
             throw new Exception("Please set the columns first.");
 
-        foreach (var row in rows)
-        {
-            if (_columns.Count != row.Count)
-                throw new Exception($"The values count ({row.Count}) must equal the columns count ({_columns.Count})");
+        var errors = rows.Select((r, n) => new {row = r, index = n + 1})
+            .Where(x => _columns.Count != x.row.Count)
+            .Select(x => $"The values count in row #{x.index} ({x.row.Count}) must equal the columns count ({_columns.Count}).");
 
-            _rows.Add(row);    
+        if (errors.Any())
+        {
+            throw new Exception(string.Join(Environment.NewLine, errors));
         }
 
+        _rows.AddRange(rows);
+        
         return this;
     }
 }

@@ -24,12 +24,12 @@ public class Table : TableBase
     protected Table(TableOptions options) : base(options) { }
 
     public Table AddColumn(params object?[] columns)
-        => AddColumns(columns.Select(TableColumn.FromObject).ToArray());
+        => AddColumn(columns.Select(TableColumn.FromObject));
 
-    public Table AddColumns(IEnumerable columns)
-        => AddColumns(columns.Cast<object>().Select(TableColumn.FromObject).ToArray());
+    public Table AddColumn(IEnumerable columns)
+        => AddColumn(columns.Cast<object>().Select(TableColumn.FromObject));
 
-    public Table AddColumns(IEnumerable<TableColumn> columns)
+    public Table AddColumn(IEnumerable<TableColumn> columns)
     {
         _columns.AddRange(columns);
         return this;
@@ -39,9 +39,9 @@ public class Table : TableBase
         => AddRow(values.Select(TableRowValue.FromObject).ToArray());
 
     public Table AddRow(params TableRowValue[] values)
-        => AddRows(new[] { new TableRow(values) });
+        => AddRow(new[] { new TableRow(values) });
 
-    public Table AddRows(params TableRow[] rows)
+    public Table AddRow(params TableRow[] rows)
     {
         if (_columns.Count == 0)
             throw new Exception("Please set the columns first.");

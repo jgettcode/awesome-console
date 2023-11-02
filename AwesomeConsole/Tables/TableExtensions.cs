@@ -170,7 +170,7 @@ public static class TableExtensions
         return Table
             .Configure(action ?? (o => o.NumberAlignment = Alignment.Right))
             .AddColumn(cols)
-            .AddRows(rows);
+            .AddRow(rows);
     }
 
     public static ITable ToConsoleTable(this Dictionary<string, object>[] data, Action<TableOptions>? action = null)
@@ -190,6 +190,6 @@ public static class TableExtensions
         return Table
             .Configure(action ?? (o => o.NumberAlignment = Alignment.Right))
             .AddColumn(cols)
-            .AddRows(rows);
+            .AddRow(rows);
     }
 }

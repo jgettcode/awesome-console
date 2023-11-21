@@ -1,4 +1,4 @@
-using System.Runtime.Serialization;
+using Xunit.Sdk;
 
 namespace AwesomeConsole.Tables.Tests;
 
@@ -42,7 +42,7 @@ public class AwesomeConsoleTableTests
             .AddRow("hello", "world", "very long text very long text");
 
         // same type (TableColumn) and null
-        table = new Table(new TableColumn("one"), null, new TableColumn("3"))
+        table = new Table(new TableColumn("one", 0), null, new TableColumn("3"))
             .AddRow(1, 2, "three")
             .AddRow("hello", "world", "very long text very long text");
             
@@ -73,7 +73,7 @@ public class AwesomeConsoleTableTests
     public void CanWriteCount()
     {
         var actual = Table.Configure(o => o.EnableCount = true)
-            .AddColumn("one", "two", "three")
+            .AddColumns("one", "two", "three")
             .AddRow(1, 2, 3)
             .AddRow("hello", "world", "very long text very long text")
             .ToString();
@@ -96,7 +96,7 @@ public class AwesomeConsoleTableTests
     public void CanWriteNumberAlignment()
     {
         var actual = Table.Configure(o => o.NumberAlignment = Alignment.Right)
-            .AddColumn("one", "two", "three")
+            .AddColumns("one", "two", "three")
             .AddRow(1, 2, 3)
             .AddRow("hello", "world", "very long text very long text")
             .ToString();
@@ -137,7 +137,7 @@ public class AwesomeConsoleTableTests
     public void CanWriteSimple()
     {
         var actual = Table.Configure(o => o.EnableCount = false)
-            .AddColumn("one", "two", "three")
+            .AddColumns("one", "two", "three")
             .AddRow(1, 2, 3)
             .AddRow("hello", "world", "very long text very long text")
             .ToString(Format.Simple);
@@ -157,7 +157,7 @@ public class AwesomeConsoleTableTests
     public void CanWriteMinimal()
     {
         var actual = Table.Configure(o => o.EnableCount = false)
-            .AddColumn("one", "two", "three")
+            .AddColumns("one", "two", "three")
             .AddRow(1, 2, 3)
             .AddRow("hello", "world", "very long text very long text")
             .ToString(Format.Minimal);
@@ -175,7 +175,7 @@ public class AwesomeConsoleTableTests
     public void CanWriteMarkdown()
     {
         var actual = Table.Configure(o => o.EnableCount = false)
-            .AddColumn("one", "two", "three")
+            .AddColumns("one", "two", "three")
             .AddRow(1, 2, 3)
             .AddRow("hello", "world", "very long text very long text")
             .ToString(Format.Markdown);
@@ -194,7 +194,7 @@ public class AwesomeConsoleTableTests
     public void CanWriteCustomFormat()
     {
         var actual = Table.Configure(o => o.EnableCount = false)
-            .AddColumn("one", "two", "three")
+            .AddColumns("one", "two", "three")
             .AddRow(1, 2, 3)
             .AddRow("hello", "world", "very long text very long text")
             .ToString(format =>
@@ -227,7 +227,8 @@ public class AwesomeConsoleTableTests
             new { first = "hello world", second = 2, third = 2.34 },
             new { first = "hello pi", second = 3, third = Math.PI },
             new { first = "goodbye world", second = 4, third = 4.56 }
-        }.ToConsoleTable(o => o.Columns[2].Update(formatter: x => x.As<double>().ToString("0.00"))).ToString();
+        }.ToConsoleTable(o => o.Columns[2].Format = "{0:0.00}").ToString();
+        //}.ToConsoleTable().ToString();
         var expected =
         """
         ----------------------------------
@@ -242,6 +243,55 @@ public class AwesomeConsoleTableTests
         | goodbye world |      4 |  4.56 |
         ----------------------------------
         """;
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void CanWriteCalculatedColumn()
+    {
+        var t = Table.From(new[]
+        {
+            new { ID = 1, Text = "hello" },
+            new { ID = 2, Text = "world" },
+        });
+        
+        t.AddColumn("Calc", (x, i) => x.ID * 2);
+        
+        var actual = t.ToString();
+
+        var expected =
+        """
+        ---------------------
+        | ID | Text  | Calc |
+        ---------------------
+        |  1 | hello |    2 |
+        ---------------------
+        |  2 | world |    4 |
+        ---------------------
+        """;
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void CanAddEmptyColumn()
+    {
+        var tx = new Table("id", "text").AddRow(1, "hello").AddRow(2, "world");
+        tx.Options.NumberAlignment = Alignment.Right;
+	    tx.AddColumn(new TableColumn("test"));
+	    var actual = tx.ToString();
+
+        var expected =
+        """
+        ---------------------
+        | id | text  | test |
+        ---------------------
+        |  1 | hello |      |
+        ---------------------
+        |  2 | world |      |
+        ---------------------
+        """;
+
         Assert.Equal(expected, actual);
     }
 }

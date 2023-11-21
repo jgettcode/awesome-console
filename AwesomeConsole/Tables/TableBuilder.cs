@@ -1,9 +1,8 @@
-using AwesomeConsole.Tables.Interfaces;
 using System.Text;
 
 namespace AwesomeConsole.Tables;
 
-public class TableBuilder
+public class TableBuilder<T>
 {
     private string? _valueDivider = null;
     private string? _newLine = null;
@@ -17,7 +16,7 @@ public class TableBuilder
         Format = format;
     }
 
-    public StringBuilder Build(ITable table)
+    public StringBuilder Build(Table<T> table)
     {
         if (table.Columns().Length == 0)
             throw new Exception("No columns have been added.");
@@ -66,13 +65,13 @@ public class TableBuilder
     protected virtual string GetLine(IEnumerable<object> items, Delimiter pad, Delimiter delimiter)
         => $"{delimiter.Left}{pad.Left}" + string.Join($"{pad.Inner}{delimiter.Inner}{pad.Inner}", items) + $"{pad.Right}{delimiter.Right}";
 
-    protected virtual string? GetValueDivider(ITable table)
+    protected virtual string? GetValueDivider(Table<T> table)
     {
         _valueDivider ??= GetDivider(table, Format.ValueDivider, Format.ValueDividerDelimiter);
         return _valueDivider;
     }
 
-    protected virtual string? GetDivider(ITable table, char? divider, Delimiter delimiter)
+    protected virtual string? GetDivider(Table<T> table, char? divider, Delimiter delimiter)
     {
         if (divider == null) return null;
         var left = Format.Pad.Left == null ? null : divider;
@@ -82,21 +81,21 @@ public class TableBuilder
         return GetLine(table.Divider(divider.Value), pad, delimiter);
     }
 
-    protected void WriteTopDivider(ITable table)
+    protected void WriteTopDivider(Table<T> table)
         => Append(GetDivider(table, Format.TopDivider, Format.TopDividerDelimiter));
 
-    protected void WriteHeaderDivider(ITable table)
+    protected void WriteHeaderDivider(Table<T> table)
         => Append(GetDivider(table, Format.HeaderDivider, Format.HeaderDividerDelimiter));
 
-    protected void WriteValueDivider(ITable table)
+    protected void WriteValueDivider(Table<T> table)
         => Append(GetDivider(table, Format.ValueDivider, Format.ValueDividerDelimiter));
 
-    protected void WriteBottomDivider(ITable table)
+    protected void WriteBottomDivider(Table<T> table)
         => Append(GetDivider(table, Format.BottomDivider, Format.BottomDividerDelimiter));
 
-    protected void WriteHeader(ITable table)
+    protected void WriteHeader(Table<T> table)
         => Append(GetLine(table.Header(), Format.Pad, Format.HeaderDelimiter));
 
-    protected void WriteRow(ITable table, ITableRow row)
+    protected void WriteRow(Table<T> table, TableRow<T> row)
         => Append(GetLine(table.Values(row), Format.Pad, Format.ValueDelimiter));
 }

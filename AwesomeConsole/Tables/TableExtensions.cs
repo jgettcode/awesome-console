@@ -1,4 +1,3 @@
-using AwesomeConsole.Tables.Interfaces;
 using System.Data;
 
 namespace AwesomeConsole.Tables;
@@ -139,57 +138,55 @@ public static class TableExtensions
         throw new Exception("The divider delimiters do not match.");
     }
 
-    public static T? As<T>(this ITableRowValue value)
-    {
-        if (value.Value == null)
-            return default;
+    public static Table<T> AddColumn<T>(this Table<T> table, string headerText, Func<T, int, object?> expression)
+	{
+		table.AddColumn(new TableColumn<T>(headerText, expression));
+        return table;
+	}
 
-        if (value.Value is T result)
-            return result;
-        else
-            throw new InvalidCastException($"Failed to cast value of type {value.Value.GetType().Name} to type {typeof(T).Name}");
+    public static Table AddColumn(this Table table, string headerText, Func<TableItem, int, object?> expression)
+    {
+        table.AddColumn(new TableColumn<TableItem>(headerText, expression));
+        return table;
     }
 
-    public static string AsFormat<T>(this ITableRowValue value, Func<T?, string> formatter)
-    {
-        return formatter(value.As<T>());
-    }
+    public static Table<T> ToConsoleTable<T>(this IEnumerable<T> items, Action<TableOptions<T>>? action = null)
+        => new(items, action);
 
-    public static Table<T> ToConsoleTable<T>(this IEnumerable<T> collection, Action<TableOptions>? action = null)
-        => Table<T>.From(collection, action ?? (o => o.NumberAlignment = Alignment.Right));
-
-    public static ITable ToConsoleTable(this DataTable dt, Action<TableOptions>? action = null)
+    public static Table ToConsoleTable(this DataTable dt, Action<TableOptions>? action = null)
     {
         var cols = dt.Columns.Cast<DataColumn>().Select(x => x.ColumnName).ToArray();
 
-        var rows = dt.AsEnumerable()
-            .Select(dr => dr.ItemArray.Select(item => new TableRowValue(item)).ToArray())
-            .Select(x => new TableRow(x))
-            .ToArray();
+        if (cols.Length == 0)
+            throw new Exception("no columns were found.");
 
-        return Table
-            .Configure(action ?? (o => o.NumberAlignment = Alignment.Right))
-            .AddColumn(cols)
-            .AddRow(rows);
+        var rows = dt.AsEnumerable().Select(dr => dr.ToTableItem()).ToArray();
+
+        var table = Table.Configure(action ?? (o => o.NumberAlignment = Alignment.Right))
+            .AddColumns(cols)
+            .AddRows(rows);
+
+        return table;
     }
 
-    public static ITable ToConsoleTable(this Dictionary<string, object>[] data, Action<TableOptions>? action = null)
+    public static Table ToConsoleTable(this Dictionary<string, object?>[] data, Action<TableOptions>? action = null)
     {
         if (!data.Any())
             throw new ArgumentException("Data must contain at least one item", nameof(data));
-        
-        var first = data.First();
 
-        var cols = first.Select(x => x.Key).ToArray();
+        var cols = data.First().Select(x => x.Key).ToArray();
 
-        var rows = data
-            .Select(dr => dr.Values.Select(item => new TableRowValue(item)).ToArray())
-            .Select(x => new TableRow(x))
-            .ToArray();
+        if (cols.Length == 0)
+            throw new Exception("no columns were found.");
+
+        var rows = data.Select(d => new TableItem(d.Select(v => v.Value).ToArray())).ToArray();
 
         return Table
             .Configure(action ?? (o => o.NumberAlignment = Alignment.Right))
-            .AddColumn(cols)
-            .AddRow(rows);
+            .AddColumns(cols)
+            .AddRows(rows);
     }
+
+    public static TableItem ToTableItem(this DataRow dr)
+        => new(dr.ItemArray);
 }

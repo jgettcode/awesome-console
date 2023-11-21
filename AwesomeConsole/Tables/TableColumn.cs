@@ -1,61 +1,77 @@
-using AwesomeConsole.Tables.Interfaces;
+using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 
 namespace AwesomeConsole.Tables;
 
-public class TableColumn : ITableColumn
+public class TableColumn<T>
 {
-    public static TableColumn FromObject(object? c)
-    {
-        if (c == null)
-            return new TableColumn(string.Empty);
-        if (c is TableColumn result)
-            return result;
-        else
-            return new TableColumn(c.ToString() ?? string.Empty);
-    }
+	public string HeaderText { get; set; }
+	public string PropertyName { get; set; } = string.Empty;
+    public Alignment? HeaderAlignment { get; set; }
+    public Alignment? CellAlignment { get; set; }
+    public string? Format { get; set; }
+    public Func<T, int, object?> Expression { get; set; }
 
-    private Func<ITableRowValue, string>? _formatter;
-
-    public string HeaderText { get; private set; }
-    public Alignment? HeaderAlignment { get; private set; }
-    public Alignment? ValueAlignment { get; private set; }
-    public bool HasFormatter => _formatter != null;
-    
-    public TableColumn(string? headerText)
-        : this(headerText, null, null, null) { }
-
-    public TableColumn(string? headerText, Alignment alignment)
-        : this(headerText, headerAlignment: alignment, valueAlignment: alignment, null) { }
-
-    public TableColumn(string? headerText, Alignment headerAlignment, Alignment valueAlignment)
-        : this(headerText, headerAlignment: headerAlignment, valueAlignment: valueAlignment, null) { }
-
-    public TableColumn(string? headerText, Func<ITableRowValue, string> formatter)
-        : this(headerText, null, null, formatter) { }
-
-    public TableColumn(string? headerText, Alignment? headerAlignment = null, Alignment? valueAlignment = null, Func<ITableRowValue, string>? formatter = null)
-    {
-        HeaderText = headerText ?? string.Empty;
+	public TableColumn(string headerText, string? propertyName = null, Alignment? headerAlignment = null, Alignment? cellAlignment = null, string? format = null)
+	{
+		HeaderText = headerText;
+		PropertyName = propertyName ?? headerText;
         HeaderAlignment = headerAlignment;
-        ValueAlignment = valueAlignment;
-        _formatter = formatter;
+        CellAlignment = cellAlignment;
+        Format = format;
+        Expression = (x, i) => typeof(T).GetProperty(PropertyName)?.GetValue(x);
+	}
+
+    public TableColumn(string headerText, Func<T, int, object?> expression, Alignment? headerAlignment = null, Alignment? cellAlignment = null, string? format = null)
+    {
+        HeaderText = headerText;
+        HeaderAlignment = headerAlignment;
+        CellAlignment = cellAlignment;
+        Format = format;
+        Expression = expression;
+    }
+}
+
+public class TableColumn : TableColumn<TableItem>
+{
+    public static IEnumerable<TableColumn> FromObjects(object?[] objects)
+    {
+        var result = objects.Select((o, n) =>
+        {
+            if (o == null)
+                return new TableColumn(string.Empty);
+            else if (o is TableColumn col)
+                return col;
+            else
+                return new TableColumn(o.ToString() ?? string.Empty);
+        }).ToList();
+
+        return result;
     }
 
-    public string Format(ITableRowValue row)
-        => (_formatter ?? throw new NullReferenceException("Formatter is null."))(row);
+    public TableColumn(string headerText)
+        : this(headerText, (x, i) => x[i].Value, null, null, null) { }
 
-    public void Update(string? headerText = null, Alignment? headerAlignment = null, Alignment? valueAlignment = null, Func<ITableRowValue, string>? formatter = null)
+    public TableColumn(string headerText, string? format)
+        : this(headerText, (x, i) => x[i].Value, null, null, format) { }
+
+    public TableColumn(string headerText, Alignment? alignment)
+        : this(headerText, (x, i) => x[i].Value, alignment, alignment, null) { }
+
+    public TableColumn(string headerText, Alignment? alignment, string? format)
+        : this(headerText, (x, i) => x[i].Value, alignment, alignment, format) { }
+
+    public TableColumn(string headerText, Alignment? headerAlignment, Alignment? cellAlignment)
+        : this(headerText, (x, i) => x[i].Value, headerAlignment, cellAlignment, null) { }
+
+    public TableColumn(string headerText, Alignment? headerAlignment, Alignment? cellAlignment, string format)
+        : this(headerText, (x, i) => x[i].Value, headerAlignment, cellAlignment, format) { }
+
+    public TableColumn(string headerText, Func<TableItem, int, object?> expression, Alignment? headerAlignment = null, Alignment? cellAlignment = null, string? format = null) : base(headerText)
     {
-        if (headerText != null)
-            HeaderText = headerText;
-        
-        if (headerAlignment != null)
-            HeaderAlignment = headerAlignment;
-        
-        if (valueAlignment != null)
-            ValueAlignment = valueAlignment;
-
-        if (formatter != null)
-            _formatter = formatter;
+        HeaderAlignment = headerAlignment;
+        CellAlignment = cellAlignment;
+        Format = format;
+        Expression = expression;
     }
 }

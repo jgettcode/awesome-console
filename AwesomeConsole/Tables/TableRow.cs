@@ -1,25 +1,16 @@
-using AwesomeConsole.Tables.Interfaces;
-using System.Collections;
-
 namespace AwesomeConsole.Tables;
 
-public class TableRow : TableRowBase
+public class TableRow<T>
 {
-    public TableRow(params ITableRowValue[] values) : base()
-    {
-        Add(values);
-    }
-}
-
-public class TableRow<T> : TableRowBase
-{
-    private readonly T _item;
-
-    public TableRow(T item)
-    {
-        _item = item;
-        _values.AddRange(typeof(T).GetProperties().Select(x => new TableRowValue(x.GetValue(_item))));
-    }
-
-    public T Data => _item;
+	private readonly List<TableCell> _cells;
+	
+	public T Item { get; }
+	
+	public TableRow(T item, params TableCell[] cells)
+	{
+		_cells = cells.ToList();
+		Item = item;
+	}
+	
+	public TableCell[] Cells => _cells.ToArray();
 }
